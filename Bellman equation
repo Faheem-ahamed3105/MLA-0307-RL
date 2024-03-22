@@ -1,0 +1,65 @@
+import numpy as np
+
+# Define grid world size
+GRID_SIZE = (3, 3)
+
+# Define rewards for each state
+rewards = np.array([
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 1]
+])
+
+# Define transition probabilities for each action (up, down, left, right)
+transition_probs = np.array([
+    # up
+    [
+        [1, 0, 0],
+        [0.8, 0, 0.2],
+        [0, 0, 1]
+    ],
+    # down
+    [
+        [1, 0, 0],
+        [0, 0, 1],
+        [0.2, 0, 0.8]
+    ],
+    # left
+    [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0.8, 0.2, 0]
+    ],
+    # right
+    [
+        [0, 0.8, 0.2],
+        [0, 1, 0],
+        [0, 0.2, 0.8]
+    ]
+])
+
+# Define discount factor
+gamma = 0.9
+
+# Initialize value function
+V = np.zeros(GRID_SIZE)
+
+# Iterate until convergence
+while True:
+    V_prev = V.copy()
+    for i in range(GRID_SIZE[0]):
+        for j in range(GRID_SIZE[1]):
+            # Calculate the value of each action
+            action_values = []
+            for action in range(4):  # Four possible actions: up, down, left, right
+                next_state_values = 0
+                for next_i in range(GRID_SIZE[0]):
+                    for next_j in range(GRID_SIZE[1]):
+                        next_state_values += transition_probs[action][i, j, next_i, next_j] * V_prev[next_i, next_j]
+                action_values.append(rewards[i, j] + gamma * next_state_values)
+            V[i, j] = max(action_values)
+    if np.max(np.abs(V - V_prev)) < 1e-6:
+        break
+
+print("Optimal Value Function:")
+print(V)
