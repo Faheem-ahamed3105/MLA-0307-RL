@@ -1,0 +1,75 @@
+import tensorflow as tf
+import numpy as np
+import gym
+
+# Define a simple environment
+class CustomEnv(gym.Env):
+    def __init__(self):
+        self.observation_space = gym.spaces.Discrete(2)  # Two states: 0 and 1
+        self.action_space = gym.spaces.Discrete(2)  # Two actions: 0 and 1
+        self.state = 0
+
+    def reset(self):
+        self.state = 0  # Reset to initial state
+        return self.state
+
+    def step(self, action):
+        if action == 0:  # Action 0 moves to state 0
+            self.state = 0
+        else:  # Action 1 moves to state 1
+            self.state = 1
+        if self.state == 0:
+            reward = 1  # Reward for being in state 0
+        else:
+            reward = -1  # Punishment for being in state 1
+        return self.state, reward, False, {}  # Return next state, reward, done, info
+
+# Create the environment
+env = CustomEnv()
+
+# Define a simple agent
+class QLearningAgent:
+    def __init__(self, num_states, num_actions):
+        self.num_states = num_states
+        self.num_actions = num_actions
+        self.q_table = np.zeros((num_states, num_actions))
+
+    def choose_action(self, state, epsilon=0.1):
+        if np.random.rand() < epsilon:
+            return np.random.choice(self.num_actions)  # Choose random action (exploration)
+        else:
+            return np.argmax(self.q_table[state])  # Choose best action from Q-table (exploitation)
+
+    def update_q_table(self, state, action, reward, next_state, learning_rate=0.1, discount_factor=0.9):
+        next_max = np.max(self.q_table[next_state])
+        self.q_table[state, action] += learning_rate * (reward + discount_factor * next_max - self.q_table[state, action])
+
+# Create the agent
+agent = QLearningAgent(num_states=env.observation_space.n, num_actions=env.action_space.n)
+
+# Training loop
+num_episodes = 1000
+epsilon = 0.1
+for episode in range(num_episodes):
+    state = env.reset()
+    done = False
+    total_reward = 0
+    while not done:
+        action = agent.choose_action(state, epsilon=epsilon)
+        next_state, reward, done, _ = env.step(action)
+        agent.update_q_table(state, action, reward, next_state)
+        state = next_state
+        total_reward += reward
+    if (episode + 1) % 100 == 0:
+        print(f"Episode {episode + 1}/{num_episodes}, Total Reward: {total_reward}")
+
+# Testing the learned policy
+state = env.reset()
+done = False
+total_reward = 0
+while not done:
+    action = np.argmax(agent.q_table[state])  # Choose best action
+    next_state, reward, done, _ = env.step(action)
+    total_reward += reward
+    state = next_state
+print("Total Reward on Testing:", total_reward)
