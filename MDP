@@ -1,0 +1,68 @@
+import numpy as np
+import gym
+
+# Define the MDP transition probabilities
+transition_probabilities = np.array([
+    # s0, a0 -> [s0, s1, s2]
+    [[0.8, 0.1, 0.1],
+     [0.1, 0.6, 0.3],
+     [0.2, 0.4, 0.4]],
+    # s1, a1 -> [s0, s1, s2]
+    [[0.7, 0.2, 0.1],
+     [0.1, 0.8, 0.1],
+     [0.3, 0.3, 0.4]],
+    # s2, a2 -> [s0, s1, s2]
+    [[0.6, 0.2, 0.2],
+     [0.3, 0.5, 0.2],
+     [0.1, 0.4, 0.5]]
+])
+
+# Define the MDP rewards
+rewards = np.array([
+    # s0, a0
+    [[5, 0, 0],
+     [0, 0, 0],
+     [0, 0, 0]],
+    # s1, a1
+    [[0, 0, 0],
+     [0, 0, 0],
+     [0, 0, -50]],
+    # s2, a2
+    [[0, 0, 0],
+     [0, 0, 0],
+     [0, 0, 0]]
+])
+
+# Define the MDP environment
+class CustomMDP(gym.Env):
+    def __init__(self):
+        self.observation_space = gym.spaces.Discrete(3)
+        self.action_space = gym.spaces.Discrete(3)
+        self.transition_probabilities = transition_probabilities
+        self.rewards = rewards
+        self.state = 0
+
+    def reset(self):
+        self.state = 0
+        return self.state
+
+    def step(self, action):
+        next_state = np.random.choice([0, 1, 2], p=self.transition_probabilities[self.state][action])
+        reward = self.rewards[self.state][action][next_state]
+        self.state = next_state
+        done = (self.state == 2)
+        return next_state, reward, done, {}
+
+# Create the MDP environment
+env = CustomMDP()
+
+# Test the environment
+state = env.reset()
+total_reward = 0
+done = False
+while not done:
+    action = env.action_space.sample()  # Random action selection
+    next_state, reward, done, _ = env.step(action)
+    total_reward += reward
+
+print("Total reward:", total_reward)
