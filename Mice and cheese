@@ -1,0 +1,77 @@
+import numpy as np
+
+class MiceAndCheese:
+    def __init__(self, grid_size=(5, 5)):
+        self.grid_size = grid_size
+        self.num_actions = 4  # up, down, left, right
+        self.num_states = grid_size[0] * grid_size[1]
+        self.q_table = np.zeros((self.num_states, self.num_actions))
+
+    def state_to_index(self, state):
+        return state[0] * self.grid_size[1] + state[1]
+
+    def index_to_state(self, index):
+        return (index // self.grid_size[1], index % self.grid_size[1])
+
+    def get_valid_actions(self, state):
+        valid_actions = [0, 1, 2, 3]  # All actions are initially valid
+        if state[0] == 0:
+            valid_actions.remove(0)  # Remove 'up' action if at the top
+        if state[0] == self.grid_size[0] - 1:
+            valid_actions.remove(1)  # Remove 'down' action if at the bottom
+        if state[1] == 0:
+            valid_actions.remove(2)  # Remove 'left' action if at the left edge
+        if state[1] == self.grid_size[1] - 1:
+            valid_actions.remove(3)  # Remove 'right' action if at the right edge
+        return valid_actions
+
+    def get_reward(self, state):
+        if state == (0, 4):  # Cheese location
+            return 10
+        elif state == (4, 4):  # Trap location
+            return -10
+        else:
+            return -1
+
+    def train(self, num_episodes=100, learning_rate=0.1, discount_factor=0.9, epsilon=0.1):
+        for episode in range(num_episodes):
+            state = (4, 0)  # Starting state
+            while state != (0, 4) and state != (4, 4):  # Continue until reaching cheese or trap
+                if np.random.rand() < epsilon:
+                    action = np.random.choice(self.get_valid_actions(state))
+                else:
+                    action = np.argmax(self.q_table[self.state_to_index(state)])
+                next_state = self.move(state, action)
+                reward = self.get_reward(next_state)
+                next_action_max = np.max(self.q_table[self.state_to_index(next_state)])
+                self.q_table[self.state_to_index(state), action] += learning_rate * \
+                                                                     (reward + discount_factor * next_action_max -
+                                                                      self.q_table[self.state_to_index(state), action])
+                state = next_state
+
+    def move(self, state, action):
+        if action == 0:  # Up
+            return (state[0] - 1, state[1]) if state[0] > 0 else state
+        elif action == 1:  # Down
+            return (state[0] + 1, state[1]) if state[0] < self.grid_size[0] - 1 else state
+        elif action == 2:  # Left
+            return (state[0], state[1] - 1) if state[1] > 0 else state
+        elif action == 3:  # Right
+            return (state[0], state[1] + 1) if state[1] < self.grid_size[1] - 1 else state
+
+    def play(self):
+        state = (4, 0)  # Starting state
+        print("Initial state:", state)
+        while state != (0, 4) and state != (4, 4):  # Continue until reaching cheese or trap
+            action = np.argmax(self.q_table[self.state_to_index(state)])
+            state = self.move(state, action)
+            print("Next state:", state)
+        if state == (0, 4):
+            print("Reached cheese!")
+        else:
+            print("Trapped in the cheese trap!")
+
+if __name__ == "__main__":
+    mc_game = MiceAndCheese()
+    mc_game.train()
+    mc_game.play()
