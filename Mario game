@@ -1,0 +1,74 @@
+import pygame
+import numpy as np
+
+# Define game parameters
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+FPS = 30
+
+# Define colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+class MarioGame:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Simple Mario Game")
+        self.clock = pygame.time.Clock()
+
+        # Mario's initial position
+        self.mario_x = 50
+        self.mario_y = SCREEN_HEIGHT - 100
+        self.mario_width = 50
+        self.mario_height = 50
+
+        # Define actions
+        self.actions = [0, 1, 2]  # Example: 0: move left, 1: stay, 2: move right
+
+        # Initialize Q-table
+        self.q_table = np.zeros((SCREEN_WIDTH, len(self.actions)))
+
+    def reset(self):
+        # Reset Mario's position
+        self.mario_x = 50
+        self.mario_y = SCREEN_HEIGHT - 100
+
+    def get_state(self):
+        # Example: discretize Mario's x position
+        return int(self.mario_x / 10)
+
+    def move_mario(self, action):
+        if action == 0:
+            self.mario_x -= 10
+        elif action == 2:
+            self.mario_x += 10
+
+    def run_game(self):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            # Choose action using Q-learning algorithm
+            state = self.get_state()
+            action = np.argmax(self.q_table[state])
+
+            # Execute action
+            self.move_mario(action)
+
+            # Update game state
+            self.screen.fill(WHITE)
+            pygame.draw.rect(self.screen, BLACK, (self.mario_x, self.mario_y, self.mario_width, self.mario_height))
+            pygame.display.flip()
+
+            # Update Q-table (not implemented in this example)
+
+            self.clock.tick(FPS)
+
+        pygame.quit()
+
+if __name__ == "__main__":
+    game = MarioGame()
+    game.run_game()
